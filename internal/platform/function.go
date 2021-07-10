@@ -4,10 +4,5 @@
 
 package platform
 
-type AuthenticateOptions map[string]string
-
-type Cloud interface {
-	Name() string
-	Authenticate() error
-	CreateFunction(opts CreateFunctionOptions) error
+type CreateFunctionOptions struct {
 }

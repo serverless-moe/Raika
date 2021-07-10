@@ -39,9 +39,9 @@ func (c *Client) GetSignature(req *http.Request) string {
 
 	httpMethod := req.Method
 	contentMd5 := req.Header.Get("Content-MD5")
-	contentType := "application/json"
+	contentType := req.Header.Get("Content-Type")
 	date := req.Header.Get("Date")
-	fcResource := ApiVersion + req.URL.Path
+	fcResource := req.URL.Path
 
 	signStr := httpMethod + "\n" + contentMd5 + "\n" + contentType + "\n" + date + "\n" + fcHeaders + fcResource
 

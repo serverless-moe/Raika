@@ -7,6 +7,8 @@ package types
 // AuthConfig contains authorization information for connecting to a cloud service.
 type AuthConfig struct {
 	Platform        Platform `json:"platform"`
+	RegionID        string   `json:"region_id"`
+	AccountID       string   `json:"account_id"`
 	AccessKeyID     string   `json:"access_key_id,omitempty"`
 	AccessKeySecret string   `json:"access_key_secret,omitempty"`
 }

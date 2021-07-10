@@ -17,7 +17,7 @@ import (
 
 var Platform = &cli.Command{
 	Name:  "platform",
-	Usage: "Manage the cloud service",
+	Usage: "Manage the cloud services",
 	Subcommands: []*cli.Command{
 		{
 			Name:   "login",
@@ -37,9 +37,6 @@ var Platform = &cli.Command{
 			Usage:  "List the current cloud service",
 			Action: listPlatform,
 		},
-	},
-	Flags: []cli.Flag{
-		stringFlag("config-file", config.DefaultConfigPath, "Config file path"),
 	},
 }
 
@@ -89,6 +86,8 @@ func loginPlatform(c *cli.Context) error {
 
 	configFile.AuthConfigs[name] = types.AuthConfig{
 		Platform:        p,
+		RegionID:        regionID,
+		AccountID:       accountID,
 		AccessKeyID:     accessKeyID,
 		AccessKeySecret: accessKeySecret,
 	}

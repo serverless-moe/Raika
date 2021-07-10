@@ -5,11 +5,13 @@
 package aliyun
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -36,6 +38,10 @@ func New(opts platform.AuthenticateOptions) *Client {
 		accessKeyID:     opts[AccessKeyIDField],
 		accessKeySecret: opts[AccessKeySecretField],
 	}
+}
+
+func (c *Client) Name() string {
+	return "aliyun"
 }
 
 func (c *Client) Authenticate() error {
@@ -89,4 +95,47 @@ func (c *Client) Authenticate() error {
 		return errors.New(respJSON.Code)
 	}
 	return nil
+}
+
+func (c *Client) request(method string, baseURL string, requestBody ...interface{}) (*response, error) {
+	u := fmt.Sprintf("https://%s.%s.fc.aliyuncs.com/%s/%s", c.accountID, c.regionID, ApiVersion, strings.TrimLeft(baseURL, "/"))
+	var body io.Reader
+	if len(requestBody) == 1 {
+		repBody, err := json.Marshal(requestBody[0])
+		if err != nil {
+			return nil, errors.Wrap(err, "JSON encode")
+		}
+		body = bytes.NewReader(repBody)
+	}
+
+	req, err := http.NewRequest(method, u, body)
+	if err != nil {
+		return nil, errors.Wrap(err, "new request")
+	}
+	req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
+	req.Header.Set("Authorization", c.GetAuthorizationHeader(req))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "do request")
+	}
+
+	return &response{
+		Response: resp,
+	}, nil
+}
+
+type response struct {
+	*http.Response
+}
+
+func (r *response) ToJSON(v interface{}) error {
+	defer func() { _ = r.Body.Close() }()
+	return json.NewDecoder(r.Body).Decode(v)
+}
+
+func (r *response) ToString() string {
+	defer func() { _ = r.Body.Close() }()
+	resp, _ := io.ReadAll(r.Body)
+	return string(resp)
 }
