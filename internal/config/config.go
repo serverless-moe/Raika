@@ -5,6 +5,7 @@
 package config
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,10 +13,11 @@ import (
 	"github.com/pkg/errors"
 	log "unknwon.dev/clog/v2"
 
-	"github.com/json-iterator/go"
-
-	"github.com/wuhan005/Raika/internal/config/types"
+	"github.com/wuhan005/Raika/internal/types"
 )
+
+var HomePath, _ = os.UserHomeDir()
+var DefaultConfigPath = filepath.Join(HomePath, "./.raika/config.json")
 
 // File stores in ~/.raika/config.json
 type File struct {
@@ -32,10 +34,33 @@ func New(fileName string) *File {
 	}
 }
 
+// Load reads the configuration data from the given file path.
+func (f *File) Load() error {
+	path := filepath.Dir(f.FileName)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(filepath.Dir(f.FileName), 0755); err != nil {
+			return errors.Wrap(err, "mkdir all")
+		}
+	}
+
+	file, err := os.Open(f.FileName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			file, err = os.Create(f.FileName)
+			if err != nil {
+				return errors.Wrap(err, "crate file")
+			}
+		} else {
+			return errors.Wrap(err, "open file")
+		}
+	}
+	return f.LoadFromReader(file)
+}
+
 // LoadFromReader reads the configuration data given and sets up the auth config
 // information with given directory and populates the receiver object.
 func (f *File) LoadFromReader(configData io.Reader) error {
-	if err := jsoniter.NewDecoder(configData).Decode(&f); err != nil && !errors.Is(err, io.EOF) {
+	if err := json.NewDecoder(configData).Decode(&f); err != nil && !errors.Is(err, io.EOF) {
 		return err
 	}
 	return nil
@@ -44,7 +69,7 @@ func (f *File) LoadFromReader(configData io.Reader) error {
 // SaveToWriter encodes and writes out all the authorization information to
 // the given writer
 func (f *File) SaveToWriter(writer io.Writer) error {
-	data, err := jsoniter.MarshalIndent(f, "", "\t")
+	data, err := json.MarshalIndent(f, "", "\t")
 	if err != nil {
 		return errors.Wrap(err, "json encode")
 	}

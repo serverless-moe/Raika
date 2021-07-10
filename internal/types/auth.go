@@ -4,13 +4,9 @@
 
 package types
 
-import (
-	"github.com/wuhan005/Raika/internal/platform"
-)
-
 // AuthConfig contains authorization information for connecting to a cloud service.
 type AuthConfig struct {
-	Platform    platform.PlatformType `json:"platform"`
-	AccessToken string                `json:"access_token,omitempty"`
-	AccessKey   string                `json:"access_key,omitempty"`
+	Platform        Platform `json:"platform"`
+	AccessKeyID     string   `json:"access_key_id,omitempty"`
+	AccessKeySecret string   `json:"access_key_secret,omitempty"`
 }

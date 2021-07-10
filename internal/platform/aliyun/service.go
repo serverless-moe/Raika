@@ -2,10 +2,8 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package platform
+package aliyun
 
-type AuthenticateOptions map[string]string
+func (c *Client) ListServices() {
 
-type Cloud interface {
-	Authenticate() error
 }
