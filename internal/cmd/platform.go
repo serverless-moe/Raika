@@ -12,6 +12,7 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
+	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -26,6 +27,8 @@ var Platform = &cli.Command{
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "platform", Usage: "Cloud platform name", Required: true},
 				&cli.StringFlag{Name: "region-id", Usage: "Cloud platform region ID"},
+				&cli.StringFlag{Name: "secret-id", Usage: "Cloud platform secret ID"},
+				&cli.StringFlag{Name: "secret-key", Usage: "Cloud platform secret key ID"},
 				&cli.StringFlag{Name: "account-id", Usage: "Cloud platform account ID"},
 				&cli.StringFlag{Name: "access-key-id", Usage: "Cloud platform access key ID"},
 				&cli.StringFlag{Name: "access-key-secret", Usage: "Cloud platform access key secret"},
@@ -44,6 +47,10 @@ func loginPlatform(c *cli.Context) error {
 	name := c.String("name")
 	configFilePath := c.String("config-file")
 	regionID := c.String("region-id")
+
+	secretID := c.String("secret-id")
+	secretKey := c.String("secret-key")
+
 	accountID := c.String("account-id")
 	accessKeyID := c.String("access-key-id")
 	accessKeySecret := c.String("access-key-secret")
@@ -59,7 +66,11 @@ func loginPlatform(c *cli.Context) error {
 			aliyun.AccessKeySecretField: accessKeySecret,
 		})
 	case types.TencentCloud:
-
+		client = tencentcloud.New(platform.AuthenticateOptions{
+			tencentcloud.RegionIDField:  regionID,
+			tencentcloud.SecretIDField:  secretID,
+			tencentcloud.SecretKeyField: secretKey,
+		})
 	default:
 		return errors.Errorf("unsupported platform: %q", p)
 	}
@@ -87,6 +98,8 @@ func loginPlatform(c *cli.Context) error {
 	configFile.AuthConfigs[name] = types.AuthConfig{
 		Platform:        p,
 		RegionID:        regionID,
+		SecretID:        secretID,
+		SecretKey:       secretKey,
 		AccountID:       accountID,
 		AccessKeyID:     accessKeyID,
 		AccessKeySecret: accessKeySecret,

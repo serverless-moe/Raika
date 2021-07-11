@@ -8,7 +8,7 @@ type Platform string
 
 const (
 	Aliyun       Platform = "aliyun"
-	TencentCloud Platform = "tencent_cloud"
+	TencentCloud Platform = "tencentcloud"
 )
 
 func (p Platform) Check() bool {
