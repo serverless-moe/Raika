@@ -9,5 +9,5 @@ type AuthenticateOptions map[string]string
 type Cloud interface {
 	Name() string
 	Authenticate() error
-	CreateFunction(opts CreateFunctionOptions) error
+	CreateFunction(opts CreateFunctionOptions) (string, error)
 }

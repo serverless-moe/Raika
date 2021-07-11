@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const ServiceName = "Raika-service"
+
 var ErrRaikaServiceNotFound = errors.New("Raika service not found")
 
 type Services []*Service

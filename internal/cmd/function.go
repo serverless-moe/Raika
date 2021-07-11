@@ -5,6 +5,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 	log "unknwon.dev/clog/v2"
@@ -25,7 +27,12 @@ var Function = &cli.Command{
 			Action: createFunction,
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "name", Usage: "Function name", Required: true},
-				&cli.StringFlag{Name: "template", Usage: "Function template file", Required: true},
+				&cli.StringFlag{Name: "description", Usage: "Function description", Required: false},
+				&cli.Int64Flag{Name: "memory", Usage: "Function runtime memory size", Required: true},
+				&cli.IntFlag{Name: "init-timeout", Usage: "Function runtime initialization timeout", Required: true},
+				&cli.IntFlag{Name: "runtime-timeout", Usage: "Function runtime timeout", Required: true},
+				&cli.IntFlag{Name: "port", Usage: "Function runtime HTTP port", Required: true},
+				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
 			},
 		},
 	},
@@ -56,11 +63,31 @@ func createFunction(c *cli.Context) error {
 		}
 	}
 
+	name := c.String("name")
+	binaryFile := c.String("binary-file")
+	description := c.String("description")
+	memorySize := c.Int64("memory")
+	initTimeout := c.Int("init-timeout")
+	runtimeTimeout := c.Int("runtime-timeout")
+	httpPort := c.Int("port")
+
 	for _, p := range platforms {
-		err := p.CreateFunction(platform.CreateFunctionOptions{})
+		triggerURL, err := p.CreateFunction(platform.CreateFunctionOptions{
+			Name:                  name,
+			Description:           description,
+			MemorySize:            memorySize,
+			Environment:           nil,
+			InitializationTimeout: time.Duration(initTimeout) * time.Second,
+			RuntimeTimeout:        time.Duration(runtimeTimeout) * time.Second,
+			HTTPPort:              httpPort,
+			File:                  binaryFile,
+		})
 		if err != nil {
 			log.Error("Failed to create function on %s: %v", p.Name(), err)
+			continue
 		}
+
+		log.Info("[ %s ] - %s", p.Name(), triggerURL)
 	}
 	return nil
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/wuhan005/Raika/internal/platform"
 )
 
-func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) error {
-
-	return nil
+func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, error) {
+	return "", nil
 }

@@ -4,5 +4,17 @@
 
 package platform
 
+import (
+	"time"
+)
+
 type CreateFunctionOptions struct {
+	Name                  string
+	Description           string
+	MemorySize            int64
+	Environment           map[string]string
+	InitializationTimeout time.Duration
+	RuntimeTimeout        time.Duration
+	HTTPPort              int
+	File                  string
 }
