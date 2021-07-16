@@ -122,7 +122,7 @@ func listPlatform(c *cli.Context) error {
 	i := 0
 	for _, p := range configFile.AuthConfigs {
 		i++
-		log.Trace("%02d - [ %s ] %s", i, p.Platform, p.AccessKeyID)
+		log.Trace("%02d - [ %s ] %s", i, p.Platform, p.GetID())
 	}
 	return nil
 }

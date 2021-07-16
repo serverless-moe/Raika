@@ -5,6 +5,7 @@
 package tencentcloud
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -45,7 +46,30 @@ type CreateTriggerResponse struct {
 	} `json:"Response"`
 }
 
-func (c *Client) CreateHTTPTrigger(opts CreateHTTPTriggerOptions) (*CreateTriggerResponse, error) {
+type HTTPTriggerDesc struct {
+	Api struct {
+		FunctionType         string `json:"functionType"`
+		ApiId                string `json:"apiId"`
+		AuthRequired         string `json:"authRequired"`
+		IsIntegratedResponse string `json:"isIntegratedResponse"`
+		RequestConfig        struct {
+			Method string `json:"method"`
+			Path   string `json:"path"`
+		} `json:"requestConfig"`
+		EnableCORS     string `json:"enableCORS"`
+		ServiceTimeout int    `json:"serviceTimeout"`
+	} `json:"api"`
+	Release struct {
+		EnvironmentName string `json:"environmentName"`
+	} `json:"release"`
+	Service struct {
+		ServiceId   string `json:"serviceId"`
+		ServiceName string `json:"serviceName"`
+		SubDomain   string `json:"subDomain"`
+	} `json:"service"`
+}
+
+func (c *Client) CreateHTTPTrigger(opts CreateHTTPTriggerOptions) (*HTTPTriggerDesc, error) {
 	requestBody := CreateHTTPTriggerRequest{
 		FunctionName: opts.FunctionName,
 		TriggerName:  opts.TriggerName,
@@ -78,5 +102,7 @@ func (c *Client) CreateHTTPTrigger(opts CreateHTTPTriggerOptions) (*CreateTrigge
 	if respJSON.Response.Error.Code != "" {
 		return nil, errors.Errorf("%s: %s", respJSON.Response.Error.Code, respJSON.Response.Error.Message)
 	}
-	return &respJSON, nil
+
+	var desc HTTPTriggerDesc
+	return &desc, json.Unmarshal([]byte(respJSON.Response.TriggerInfo.TriggerDesc), &desc)
 }

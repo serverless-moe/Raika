@@ -14,3 +14,14 @@ type AuthConfig struct {
 	AccessKeyID     string   `json:"access_key_id,omitempty"`
 	AccessKeySecret string   `json:"access_key_secret,omitempty"`
 }
+
+func (a *AuthConfig) GetID() string {
+	switch a.Platform {
+	case "aliyun":
+		return a.AccessKeyID
+	case "tencentcloud":
+		return a.SecretID
+	default:
+		return a.AccessKeyID
+	}
+}

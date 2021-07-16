@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	log "unknwon.dev/clog/v2"
 )
 
 const TriggerName = "Raika_HTTPTrigger"
@@ -71,6 +69,5 @@ func (c *Client) GetHTTPTrigger(opts GetHTTPTriggerOptions) (*HTTPTriggerRespons
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.ToString())
 	}
-	log.Trace("%v", resp.ToString())
 	return nil, nil
 }
