@@ -14,6 +14,7 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
+	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -31,7 +32,6 @@ var Function = &cli.Command{
 				&cli.Int64Flag{Name: "memory", Usage: "Function runtime memory size", Required: true},
 				&cli.IntFlag{Name: "init-timeout", Usage: "Function runtime initialization timeout", Required: true},
 				&cli.IntFlag{Name: "runtime-timeout", Usage: "Function runtime timeout", Required: true},
-				&cli.IntFlag{Name: "port", Usage: "Function runtime HTTP port", Required: true},
 				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
 			},
 		},
@@ -57,7 +57,12 @@ func createFunction(c *cli.Context) error {
 			})
 			platforms = append(platforms, client)
 		case types.TencentCloud:
-
+			client := tencentcloud.New(platform.AuthenticateOptions{
+				tencentcloud.RegionIDField:  p.RegionID,
+				tencentcloud.SecretIDField:  p.SecretID,
+				tencentcloud.SecretKeyField: p.SecretKey,
+			})
+			platforms = append(platforms, client)
 		default:
 			return errors.Errorf("unsupported platform: %q", p)
 		}
@@ -69,17 +74,16 @@ func createFunction(c *cli.Context) error {
 	memorySize := c.Int64("memory")
 	initTimeout := c.Int("init-timeout")
 	runtimeTimeout := c.Int("runtime-timeout")
-	httpPort := c.Int("port")
 
 	for _, p := range platforms {
 		triggerURL, err := p.CreateFunction(platform.CreateFunctionOptions{
 			Name:                  name,
 			Description:           description,
 			MemorySize:            memorySize,
-			Environment:           nil,
+			Environment:           map[string]string{},
 			InitializationTimeout: time.Duration(initTimeout) * time.Second,
 			RuntimeTimeout:        time.Duration(runtimeTimeout) * time.Second,
-			HTTPPort:              httpPort,
+			HTTPPort:              9000, // For tencentcloud
 			File:                  binaryFile,
 		})
 		if err != nil {

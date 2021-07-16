@@ -77,7 +77,7 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 
 	// Create HTTP trigger for function.
 	err = c.CreateHTTPTrigger(CreateHTTPTriggerOptions{
-		TriggerName:  TriggerName,
+		TriggerName:  platform.TriggerName,
 		ServiceName:  ServiceName,
 		FunctionName: opts.Name,
 	})
