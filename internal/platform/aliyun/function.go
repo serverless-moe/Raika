@@ -34,6 +34,7 @@ type CreateFunctionRequest struct {
 }
 
 func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, error) {
+	// Create service if not exists.
 	_, err := c.GetRaikaService()
 	if err == ErrRaikaServiceNotFound {
 		log.Trace("Raika service not found on aliyun, create...")
@@ -54,6 +55,32 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		return "", errors.Wrap(err, "pack file")
 	}
 
+	// Check current function name exists.
+	_, err = c.GetFunction(ServiceName, opts.Name)
+	if err != nil && err != ErrFunctionNotExists {
+		return "", errors.Wrap(err, "get function")
+	} else if err == nil {
+		// Function exists, delete it.
+		log.Trace("Function %q exists on aliyun, replace...", opts.Name)
+
+		// Delete the triggers under the function.
+		triggers, err := c.ListTriggers(ServiceName, opts.Name)
+		if err != nil {
+			return "", errors.Wrap(err, "list triggers")
+		}
+		for _, trigger := range triggers.Triggers {
+			log.Trace("Delete trigger: %q...", trigger.TriggerName)
+			if err := c.DeleteTrigger(ServiceName, opts.Name, trigger.TriggerName); err != nil {
+				return "", errors.Wrapf(err, "delete trigger: %q", opts.Name)
+			}
+		}
+
+		log.Trace("Delete function: %q...", opts.Name)
+		if err := c.DeleteFunction(ServiceName, opts.Name); err != nil && err != ErrFunctionNotExists {
+			return "", errors.Wrap(err, "delete function")
+		}
+	}
+
 	requestBody := CreateFunctionRequest{
 		Name:        opts.Name,
 		Description: opts.Description,
@@ -70,6 +97,7 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		CAPort:                opts.HTTPPort,
 	}
 
+	log.Trace("Deploy function: %q...", opts.Name)
 	_, err = c.request(http.MethodPost, fmt.Sprintf("/services/%s/functions", ServiceName), requestBody)
 	if err != nil {
 		return "", errors.Wrap(err, "create function")
@@ -112,4 +140,64 @@ func packFile(path string) ([]byte, error) {
 	_ = zipWriter.Close()
 
 	return output.Bytes(), nil
+}
+
+type GetFunctionResponse struct {
+	CodeChecksum          string    `json:"codeChecksum"`
+	CodeSize              int       `json:"codeSize"`
+	CreatedTime           time.Time `json:"createdTime"`
+	Description           string    `json:"description"`
+	FunctionId            string    `json:"functionId"`
+	FunctionName          string    `json:"functionName"`
+	Handler               string    `json:"handler"`
+	MemorySize            int       `json:"memorySize"`
+	Runtime               string    `json:"runtime"`
+	Timeout               int       `json:"timeout"`
+	InitializationTimeout int       `json:"initializationTimeout"`
+	Initializer           string    `json:"initializer"`
+	CaPort                int       `json:"caPort"`
+	CustomContainerConfig struct {
+		Args             string `json:"args"`
+		Command          string `json:"command"`
+		Image            string `json:"image"`
+		AccelerationType string `json:"accelerationType"`
+		AccelerationInfo struct {
+			Status string `json:"status"`
+		} `json:"accelerationInfo"`
+	} `json:"customContainerConfig"`
+	Layers []string `json:"layers"`
+}
+
+var ErrFunctionNotExists = errors.New("function not found")
+
+func (c *Client) GetFunction(serviceName, functionName string) (*GetFunctionResponse, error) {
+	resp, err := c.request(http.MethodGet, fmt.Sprintf("/services/%s/functions/%s", serviceName, functionName))
+	if err != nil {
+		return nil, errors.Wrap(err, "create function")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, ErrFunctionNotExists
+		}
+		return nil, errors.Errorf("unexpected status code %d: %v", resp.StatusCode, resp.ToString())
+	}
+
+	var respJSON GetFunctionResponse
+	return &respJSON, resp.ToJSON(&respJSON)
+}
+
+func (c *Client) DeleteFunction(serviceName, functionName string) error {
+	resp, err := c.request(http.MethodDelete, fmt.Sprintf("/services/%s/functions/%s", serviceName, functionName))
+	if err != nil {
+		return errors.Wrap(err, "delete function")
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		if resp.StatusCode == http.StatusNotFound {
+			return ErrFunctionNotExists
+		}
+		return errors.Errorf("unexpected status code %d: %v", resp.StatusCode, resp.ToString())
+	}
+	return nil
 }

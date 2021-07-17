@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 const TriggerName = "Raika_HTTPTrigger"
@@ -52,17 +53,11 @@ func (c *Client) CreateHTTPTrigger(opts CreateHTTPTriggerOptions) error {
 	return nil
 }
 
-type GetHTTPTriggerOptions struct {
-	TriggerName  string
-	ServiceName  string
-	FunctionName string
-}
-
 type HTTPTriggerResponse struct {
 }
 
-func (c *Client) GetHTTPTrigger(opts GetHTTPTriggerOptions) (*HTTPTriggerResponse, error) {
-	resp, err := c.request(http.MethodGet, fmt.Sprintf("/services/%s/functions/%s/triggers/%s", opts.ServiceName, opts.FunctionName, opts.TriggerName))
+func (c *Client) GetHTTPTrigger(serviceName, functionName, triggerName string) (*HTTPTriggerResponse, error) {
+	resp, err := c.request(http.MethodGet, fmt.Sprintf("/services/%s/functions/%s/triggers/%s", serviceName, functionName, triggerName))
 	if err != nil {
 		return nil, err
 	}
@@ -70,4 +65,48 @@ func (c *Client) GetHTTPTrigger(opts GetHTTPTriggerOptions) (*HTTPTriggerRespons
 		return nil, errors.New(resp.ToString())
 	}
 	return nil, nil
+}
+
+type ListTriggersResponse struct {
+	Triggers []struct {
+		TriggerName    string      `json:"triggerName"`
+		Description    string      `json:"description"`
+		TriggerId      string      `json:"triggerId"`
+		SourceArn      interface{} `json:"sourceArn"`
+		TriggerType    string      `json:"triggerType"`
+		InvocationRole string      `json:"invocationRole"`
+		Qualifier      string      `json:"qualifier"`
+		TriggerConfig  struct {
+			Methods  []string `json:"methods"`
+			AuthType string   `json:"authType"`
+		} `json:"triggerConfig"`
+		CreatedTime      time.Time `json:"createdTime"`
+		LastModifiedTime time.Time `json:"lastModifiedTime"`
+	} `json:"triggers"`
+}
+
+func (c *Client) ListTriggers(serviceName, functionName string) (*ListTriggersResponse, error) {
+	// TODO support nextToken
+	resp, err := c.request(http.MethodGet, fmt.Sprintf("/services/%s/functions/%s/triggers?limit=100", serviceName, functionName))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.ToString())
+	}
+
+	var respJSON ListTriggersResponse
+	return &respJSON, resp.ToJSON(&respJSON)
+}
+
+func (c *Client) DeleteTrigger(serviceName, functionName, triggerName string) error {
+	resp, err := c.request(http.MethodDelete, fmt.Sprintf("/services/%s/functions/%s/triggers/%s", serviceName, functionName, triggerName))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.New(resp.ToString())
+	}
+	return nil
 }

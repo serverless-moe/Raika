@@ -14,7 +14,6 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
-	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -57,12 +56,12 @@ func createFunction(c *cli.Context) error {
 			})
 			platforms = append(platforms, client)
 		case types.TencentCloud:
-			client := tencentcloud.New(platform.AuthenticateOptions{
-				tencentcloud.RegionIDField:  p.RegionID,
-				tencentcloud.SecretIDField:  p.SecretID,
-				tencentcloud.SecretKeyField: p.SecretKey,
-			})
-			platforms = append(platforms, client)
+			//client := tencentcloud.New(platform.AuthenticateOptions{
+			//	tencentcloud.RegionIDField:  p.RegionID,
+			//	tencentcloud.SecretIDField:  p.SecretID,
+			//	tencentcloud.SecretKeyField: p.SecretKey,
+			//})
+			//platforms = append(platforms, client)
 		default:
 			return errors.Errorf("unsupported platform: %q", p)
 		}
