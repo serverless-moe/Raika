@@ -7,6 +7,7 @@ package tencentcloud
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 )
@@ -105,4 +106,66 @@ func (c *Client) CreateHTTPTrigger(opts CreateHTTPTriggerOptions) (*HTTPTriggerD
 
 	var desc HTTPTriggerDesc
 	return &desc, json.Unmarshal([]byte(respJSON.Response.TriggerInfo.TriggerDesc), &desc)
+}
+
+type GetTriggerResponse struct {
+	Response struct {
+		RequestId  string `json:"RequestId"`
+		TotalCount int    `json:"TotalCount"`
+		Triggers   []struct {
+			AddTime          string `json:"AddTime"`
+			AvailableStatus  string `json:"AvailableStatus"`
+			BindStatus       string `json:"BindStatus"`
+			CustomArgument   string `json:"CustomArgument"`
+			Enable           int    `json:"Enable"`
+			ModTime          string `json:"ModTime"`
+			Qualifier        string `json:"Qualifier"`
+			ResourceId       string `json:"ResourceId"`
+			TriggerAttribute string `json:"TriggerAttribute"`
+			TriggerDesc      string `json:"TriggerDesc"`
+			TriggerName      string `json:"TriggerName"`
+			Type             string `json:"Type"`
+		} `json:"Triggers"`
+	} `json:"Response"`
+}
+
+func (c *Client) GetTriggers(functionName string) (*GetTriggerResponse, error) {
+	resp, err := c.request(http.MethodGet, "ListTriggers", url.Values{
+		"FunctionName": []string{functionName},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var respJSON GetTriggerResponse
+	return &respJSON, resp.ToJSON(&respJSON)
+}
+
+type DeleteTriggerResponse struct {
+	Response struct {
+		Error struct {
+			Code    string `json:"Code"`
+			Message string `json:"Message"`
+		} `json:"Error"`
+		RequestId string `json:"RequestId"`
+	} `json:"Response"`
+}
+
+func (c *Client) DeleteTrigger(functionName, triggerName, triggerType string) error {
+	resp, err := c.request(http.MethodGet, "DeleteTrigger", url.Values{
+		"FunctionName": []string{functionName},
+		"TriggerName":  []string{triggerName},
+		"Type":         []string{triggerType},
+	})
+	if err != nil {
+		return err
+	}
+
+	var respJSON DeleteTriggerResponse
+	if err := resp.ToJSON(&respJSON); err != nil {
+		return errors.Wrap(err, "json decode")
+	}
+	if respJSON.Response.Error.Code != "" {
+		return errors.Errorf("%s: %s", respJSON.Response.Error.Code, respJSON.Response.Error.Message)
+	}
+	return nil
 }

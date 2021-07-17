@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "unknwon.dev/clog/v2"
 
 	"github.com/wuhan005/Raika/internal/platform"
 )
@@ -38,6 +39,7 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		return "", errors.Wrap(err, "pack file")
 	}
 
+	log.Trace("Deploy function %q...", opts.Name)
 	_, err = c.request(http.MethodPost, "CreateFunction", CreateFunctionRequest{
 		Name:        opts.Name,
 		Description: opts.Description,
@@ -71,7 +73,21 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		functionStatus = functionInfo.Response.Status
 	}
 
+	// Check the HTTP trigger exists or not before creating the function.
+	triggers, err := c.GetTriggers(opts.Name)
+	if err != nil {
+		return "", errors.Wrap(err, "get triggers")
+	}
+
+	for _, trigger := range triggers.Response.Triggers {
+		log.Trace("Delete trigger %q...", trigger.TriggerName)
+		if err := c.DeleteTrigger(opts.Name, trigger.TriggerName, trigger.Type); err != nil {
+			return "", errors.Wrap(err, "delete trigger")
+		}
+	}
+
 	// Create HTTP trigger for function.
+	log.Trace("Create HTTP trigger...")
 	resp, err := c.CreateHTTPTrigger(CreateHTTPTriggerOptions{
 		TriggerName:  platform.TriggerName,
 		FunctionName: opts.Name,

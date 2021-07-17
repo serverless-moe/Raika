@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -30,7 +31,7 @@ func New(opts platform.AuthenticateOptions) *Client {
 	}
 }
 
-func (c *Client) Name() string {
+func (c *Client) String() string {
 	return "tencentcloud"
 }
 
@@ -64,6 +65,7 @@ func (c *Client) request(method, action string, requestBody ...interface{}) (*re
 	var err error
 	var body io.Reader
 	var reqBody []byte
+	var query url.Values
 	if len(requestBody) == 1 {
 		if method == http.MethodPost {
 			reqBody, err = json.Marshal(requestBody[0])
@@ -71,6 +73,10 @@ func (c *Client) request(method, action string, requestBody ...interface{}) (*re
 				return nil, errors.Wrap(err, "JSON encode")
 			}
 			body = bytes.NewReader(reqBody)
+		} else if method == http.MethodGet {
+			if v, ok := requestBody[0].(url.Values); ok {
+				query = v
+			}
 		} else {
 			body = bytes.NewReader(nil)
 		}
@@ -79,6 +85,10 @@ func (c *Client) request(method, action string, requestBody ...interface{}) (*re
 	req, err := http.NewRequest(method, u, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "new request")
+	}
+
+	if query != nil {
+		req.URL.RawQuery = query.Encode()
 	}
 	req.Header.Set("x-tc-action", action)
 	req.Header.Set("x-tc-region", c.regionID)

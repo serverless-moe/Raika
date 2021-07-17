@@ -40,7 +40,7 @@ func New(opts platform.AuthenticateOptions) *Client {
 	}
 }
 
-func (c *Client) Name() string {
+func (c *Client) String() string {
 	return "aliyun"
 }
 

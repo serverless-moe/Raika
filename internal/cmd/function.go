@@ -88,6 +88,7 @@ func createFunction(c *cli.Context) error {
 	runtimeTimeout := c.Int("runtime-timeout")
 
 	for _, p := range platforms {
+		log.Info("Create function %q on %s", name, p)
 		triggerURL, err := p.CreateFunction(platform.CreateFunctionOptions{
 			Name:                  name,
 			Description:           description,
@@ -99,11 +100,11 @@ func createFunction(c *cli.Context) error {
 			File:                  binaryFile,
 		})
 		if err != nil {
-			log.Error("Failed to create function on %s: %v", p.Name(), err)
+			log.Error("Failed to create function on %s: %v", p, err)
 			continue
 		}
 
-		log.Info("[ %s ] - %s", p.Name(), triggerURL)
+		log.Info("[ %s ] - %s", p, triggerURL)
 	}
 	return nil
 }

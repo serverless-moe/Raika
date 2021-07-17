@@ -7,7 +7,7 @@ package platform
 type AuthenticateOptions map[string]string
 
 type Cloud interface {
-	Name() string
+	String() string
 	Authenticate() error
 	CreateFunction(opts CreateFunctionOptions) (string, error)
 }
