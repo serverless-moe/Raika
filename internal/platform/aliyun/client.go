@@ -65,7 +65,7 @@ func (c *Client) Authenticate() error {
 
 	// Generate signature
 	hashSign := hmac.New(sha1.New, []byte(c.accessKeySecret+"&"))
-	hashSign.Write([]byte(http.MethodGet + "&%2F&" + url.QueryEscape(u.RawQuery)))
+	_, _ = hashSign.Write([]byte(http.MethodGet + "&%2F&" + url.QueryEscape(u.RawQuery)))
 	signature := base64.StdEncoding.EncodeToString(hashSign.Sum(nil))
 	u.RawQuery += "&Signature=" + url.QueryEscape(signature)
 

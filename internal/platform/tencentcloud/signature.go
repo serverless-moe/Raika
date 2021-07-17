@@ -64,13 +64,13 @@ func (c *Client) GetAuthorizationHeader(req *http.Request, body []byte) string {
 		),
 		secretSigning),
 	))
-	
+
 	return fmt.Sprintf("TC3-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s", c.secretID, credentialScope, signedHeaders, signature)
 }
 
 func hmacSha256(s, key string) string {
 	hashed := hmac.New(sha256.New, []byte(key))
-	hashed.Write([]byte(s))
+	_, _ = hashed.Write([]byte(s))
 	return string(hashed.Sum(nil))
 }
 
