@@ -6,24 +6,63 @@ package cmd
 
 import (
 	"os"
-	"os/signal"
-	"syscall"
+	"os/exec"
 
 	"github.com/urfave/cli/v2"
+
+	"github.com/wuhan005/Raika/internal/api"
+	"github.com/wuhan005/Raika/internal/daemon"
 )
 
 var Daemon = &cli.Command{
-	Name:   "daemon",
-	Usage:  "Run Raika daemon",
-	Action: runDaemon,
+	Name:  "daemon",
+	Usage: "Configure the Raika daemon",
+	Subcommands: []*cli.Command{
+		{
+			Name:   "start",
+			Usage:  "Start the Raika daemon",
+			Action: startDaemon,
+		},
+		{
+			Name:   "run",
+			Usage:  "Run the daemon on frontend",
+			Action: runDaemon,
+		},
+		{
+			Name:   "stop",
+			Usage:  "Stop the Raika daemon",
+			Action: stopDaemon,
+		},
+		{
+			Name:   "reload",
+			Usage:  "Reload the config",
+			Action: reloadConfig,
+		},
+		{
+			Name:        "cron",
+			Usage:       "Set the cron task",
+			Subcommands: cronCommands,
+		},
+	},
 	Flags: []cli.Flag{
 
 	},
 }
 
-func runDaemon(c *cli.Context) error {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-	<-sig
-	return nil
+func startDaemon(_ *cli.Context) error {
+	cmd := exec.Command(os.Args[0], "daemon", "run")
+	cmd.Stderr = os.Stderr
+	return cmd.Start()
+}
+
+func runDaemon(_ *cli.Context) error {
+	return daemon.Run()
+}
+
+func stopDaemon(_ *cli.Context) error {
+	return api.Stop()
+}
+
+func reloadConfig(_ *cli.Context) error {
+	return api.Reload()
 }

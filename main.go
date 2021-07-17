@@ -29,10 +29,14 @@ func main() {
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "config-file", Value: config.DefaultConfigPath, Usage: "Config file path"},
 		&cli.StringFlag{Name: "function-file", Value: store.DefaultFunctionPath, Usage: "Function file path"},
+		&cli.StringFlag{Name: "task-file", Value: store.DefaultTaskPath, Usage: "Task file path"},
 	}
 	app.Before = func(c *cli.Context) error {
 		if err := store.Functions.Init(c.String("function-file")); err != nil {
 			return errors.Wrap(err, "load function file")
+		}
+		if err := store.Tasks.Init(c.String("task-file")); err != nil {
+			return errors.Wrap(err, "load task file")
 		}
 		return nil
 	}

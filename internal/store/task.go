@@ -14,72 +14,51 @@ import (
 	"github.com/pkg/errors"
 	log "unknwon.dev/clog/v2"
 
-	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/fileutil"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
-var Functions FunctionStore
+var Tasks TaskStore
 
-// FunctionStore stores in ~/.raika/functions.json
-type FunctionStore struct {
+// TaskStore stores in ~/.raika/tasks.json
+type TaskStore struct {
 	FileName string `json:"-"` // Note: for internal use only
 
-	Functions map[string][]types.Function `json:"functions"`
+	Tasks map[string]types.Task `json:"tasks"`
 }
 
 // Init reads the configuration data from the given file path.
-func (s *FunctionStore) Init(fileName string) error {
-	Functions = FunctionStore{
-		FileName:  fileName,
-		Functions: make(map[string][]types.Function),
+func (s *TaskStore) Init(fileName string) error {
+	Tasks = TaskStore{
+		FileName: fileName,
+		Tasks:    make(map[string]types.Task),
 	}
 	return s.Load()
 }
 
-// Set creates a new function record.
-func (s *FunctionStore) Set(functionName string, platformID string, triggerURL string, opts platform.CreateFunctionOptions) error {
-	if s.Functions[functionName] == nil {
-		s.Functions[functionName] = make([]types.Function, 0)
+type CreateTaskOptions struct {
+	FunctionName string
+	Duration     time.Duration
+}
+
+// Upsert creates or update a new task record.
+func (s *TaskStore) Upsert(opts CreateTaskOptions) error {
+	s.Tasks[opts.FunctionName] = types.Task{
+		FunctionName: opts.FunctionName,
+		Duration:     opts.Duration,
+		Enabled:      true,
 	}
 
-	f := types.Function{
-		PlatformID:            platformID,
-		URL:                   triggerURL,
-		CreatedAt:             time.Now(),
-		Name:                  opts.Name,
-		Description:           opts.Description,
-		MemorySize:            opts.MemorySize,
-		Environment:           opts.Environment,
-		InitializationTimeout: opts.InitializationTimeout,
-		RuntimeTimeout:        opts.RuntimeTimeout,
-		HTTPPort:              opts.HTTPPort,
-		File:                  opts.File,
-	}
-
-	for k, function := range s.Functions[functionName] {
-		if function.PlatformID == platformID {
-			s.Functions[functionName][k] = f
-			return s.Save()
-		}
-	}
-
-	s.Functions[functionName] = append(s.Functions[functionName], f)
 	return s.Save()
 }
 
-var ErrFunctionNotExists = errors.New("function not found")
-
-func (s *FunctionStore) Get(functionName string) ([]types.Function, error) {
-	function, ok := s.Functions[functionName]
-	if !ok {
-		return nil, ErrFunctionNotExists
-	}
-	return function, nil
+func (s *TaskStore) Delete(functionName string) error {
+	delete(s.Tasks, functionName)
+	return nil
 }
 
 // Load reads the configuration data from the given file path.
-func (s *FunctionStore) Load() error {
+func (s *TaskStore) Load() error {
 	path := filepath.Dir(s.FileName)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(filepath.Dir(s.FileName), 0755); err != nil {
@@ -103,7 +82,7 @@ func (s *FunctionStore) Load() error {
 
 // LoadFromReader reads the configuration data given and sets up the auth config
 // information with given directory and populates the receiver object.
-func (s *FunctionStore) LoadFromReader(configData io.Reader) error {
+func (s *TaskStore) LoadFromReader(configData io.Reader) error {
 	if err := json.NewDecoder(configData).Decode(&s); err != nil && !errors.Is(err, io.EOF) {
 		return err
 	}
@@ -112,7 +91,7 @@ func (s *FunctionStore) LoadFromReader(configData io.Reader) error {
 
 // SaveToWriter encodes and writes out all the authorization information to
 // the given writer
-func (s *FunctionStore) SaveToWriter(writer io.Writer) error {
+func (s *TaskStore) SaveToWriter(writer io.Writer) error {
 	data, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		return errors.Wrap(err, "json encode")
@@ -122,7 +101,7 @@ func (s *FunctionStore) SaveToWriter(writer io.Writer) error {
 }
 
 // Save encodes and writes out all the authorization information
-func (s *FunctionStore) Save() (retErr error) {
+func (s *TaskStore) Save() (retErr error) {
 	if s.FileName == "" {
 		return errors.New("Can't save config with empty filename")
 	}
