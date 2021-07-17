@@ -14,6 +14,7 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
+	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -32,6 +33,7 @@ var Function = &cli.Command{
 				&cli.IntFlag{Name: "init-timeout", Usage: "Function runtime initialization timeout", Required: true},
 				&cli.IntFlag{Name: "runtime-timeout", Usage: "Function runtime timeout", Required: true},
 				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
+				&cli.StringSliceFlag{Name: "platform", Usage: "Platform to deploy", Required: false},
 			},
 		},
 	},
@@ -45,7 +47,18 @@ func createFunction(c *cli.Context) error {
 	}
 
 	platforms := make([]platform.Cloud, 0, len(configFile.AuthConfigs))
+	platformNames := c.StringSlice("platform")
+	platformNameSet := make(map[types.Platform]struct{})
+	for _, platformName := range platformNames {
+		platformNameSet[types.Platform(platformName)] = struct{}{}
+	}
+
 	for _, p := range configFile.AuthConfigs {
+		_, ok := platformNameSet[p.Platform]
+		if len(platformNameSet) != 0 && !ok {
+			continue
+		}
+
 		switch p.Platform {
 		case types.Aliyun:
 			client := aliyun.New(platform.AuthenticateOptions{
@@ -56,12 +69,12 @@ func createFunction(c *cli.Context) error {
 			})
 			platforms = append(platforms, client)
 		case types.TencentCloud:
-			//client := tencentcloud.New(platform.AuthenticateOptions{
-			//	tencentcloud.RegionIDField:  p.RegionID,
-			//	tencentcloud.SecretIDField:  p.SecretID,
-			//	tencentcloud.SecretKeyField: p.SecretKey,
-			//})
-			//platforms = append(platforms, client)
+			client := tencentcloud.New(platform.AuthenticateOptions{
+				tencentcloud.RegionIDField:  p.RegionID,
+				tencentcloud.SecretIDField:  p.SecretID,
+				tencentcloud.SecretKeyField: p.SecretKey,
+			})
+			platforms = append(platforms, client)
 		default:
 			return errors.Errorf("unsupported platform: %q", p)
 		}
