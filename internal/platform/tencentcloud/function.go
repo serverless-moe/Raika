@@ -18,15 +18,22 @@ import (
 	"github.com/wuhan005/Raika/internal/platform"
 )
 
+type kv struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
 type CreateFunctionRequest struct {
 	Name        string `json:"FunctionName"`
 	Description string `json:"Description"`
 	Code        struct {
 		ZipFile []byte `json:"ZipFile"`
 	} `json:"Code"`
-	Runtime         string                 `json:"Runtime"`
-	MemorySize      int64                  `json:"MemorySize"`
-	Environment     map[string]string      `json:"Environment,omitempty"`
+	Runtime     string `json:"Runtime"`
+	MemorySize  int64  `json:"MemorySize"`
+	Environment struct {
+		Variables []kv `json:"Variables"`
+	} `json:"Environment"`
 	InitTimeout     int                    `json:"InitTimeout"`
 	Timeout         int                    `json:"Timeout"`
 	Type            string                 `json:"Type"`
@@ -40,15 +47,27 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 	}
 
 	log.Trace("Deploy function %q...", opts.Name)
-	_, err = c.request(http.MethodPost, "CreateFunction", CreateFunctionRequest{
+
+	// Parse environment key-value pairs.
+	environmentKV := make([]kv, 0, len(opts.EnvironmentVariables))
+	for k, v := range opts.EnvironmentVariables {
+		environmentKV = append(environmentKV, kv{
+			Key:   k,
+			Value: v,
+		})
+	}
+
+	request := CreateFunctionRequest{
 		Name:        opts.Name,
 		Description: opts.Description,
 		Code: struct {
 			ZipFile []byte `json:"ZipFile"`
 		}{ZipFile: zipFile},
-		Runtime:     "Go1",
-		MemorySize:  opts.MemorySize,
-		Environment: opts.Environment,
+		Runtime:    "Go1",
+		MemorySize: opts.MemorySize,
+		Environment: struct {
+			Variables []kv `json:"Variables"`
+		}{Variables: environmentKV},
 		InitTimeout: int(opts.InitializationTimeout / time.Second),
 		Timeout:     int(opts.RuntimeTimeout / time.Second),
 		Type:        "HTTP",
@@ -58,7 +77,9 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 				"EipStatus": "DISABLE",
 			},
 		},
-	})
+	}
+
+	_, err = c.request(http.MethodPost, "CreateFunction", request)
 	if err != nil {
 		return "", errors.Wrap(err, "create function")
 	}

@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -36,6 +37,7 @@ var Function = &cli.Command{
 				&cli.IntFlag{Name: "runtime-timeout", Usage: "Function runtime timeout", Required: true},
 				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
 				&cli.StringSliceFlag{Name: "platform", Usage: "Platform to deploy", Required: false},
+				&cli.StringSliceFlag{Name: "env", Usage: "Environment variables", Required: false},
 			},
 		},
 		{
@@ -95,6 +97,17 @@ func createFunction(c *cli.Context) error {
 	memorySize := c.Int64("memory")
 	initTimeout := c.Int("init-timeout")
 	runtimeTimeout := c.Int("runtime-timeout")
+	environmentVariables := c.StringSlice("env")
+
+	envs := make(map[string]string)
+	// Parse environment variables.
+	for _, env := range environmentVariables {
+		kv := strings.SplitN(env, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		envs[kv[0]] = kv[1]
+	}
 
 	for _, p := range platforms {
 		log.Info("Create function %q on %s", name, p)
@@ -103,7 +116,7 @@ func createFunction(c *cli.Context) error {
 			Name:                  name,
 			Description:           description,
 			MemorySize:            memorySize,
-			Environment:           map[string]string{},
+			EnvironmentVariables:  envs,
 			InitializationTimeout: time.Duration(initTimeout) * time.Second,
 			RuntimeTimeout:        time.Duration(runtimeTimeout) * time.Second,
 			HTTPPort:              9000, // For tencentcloud

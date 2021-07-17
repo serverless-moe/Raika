@@ -25,12 +25,13 @@ type CreateFunctionRequest struct {
 	Code        struct {
 		ZipBase64 []byte `json:"zipFile"`
 	} `json:"code"`
-	Handler               string `json:"handler"`
-	Runtime               string `json:"runtime"`
-	MemorySize            int64  `json:"memorySize"`
-	InitializationTimeout int    `json:"initializationTimeout"`
-	Timeout               int    `json:"timeout"`
-	CAPort                int    `json:"caPort"`
+	Handler               string            `json:"handler"`
+	Runtime               string            `json:"runtime"`
+	MemorySize            int64             `json:"memorySize"`
+	InitializationTimeout int               `json:"initializationTimeout"`
+	Timeout               int               `json:"timeout"`
+	CAPort                int               `json:"caPort"`
+	EnvironmentVariables  map[string]string `json:"environmentVariables,omitempty"`
 }
 
 func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, error) {
@@ -95,6 +96,7 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		InitializationTimeout: int(opts.InitializationTimeout / time.Second),
 		Timeout:               int(opts.RuntimeTimeout / time.Second),
 		CAPort:                opts.HTTPPort,
+		EnvironmentVariables:  opts.EnvironmentVariables,
 	}
 
 	log.Trace("Deploy function: %q...", opts.Name)

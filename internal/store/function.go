@@ -50,7 +50,7 @@ func (s *FunctionStore) Set(functionName string, platformID string, triggerURL s
 		Name:                  opts.Name,
 		Description:           opts.Description,
 		MemorySize:            opts.MemorySize,
-		Environment:           opts.Environment,
+		Environment:           opts.EnvironmentVariables,
 		InitializationTimeout: opts.InitializationTimeout,
 		RuntimeTimeout:        opts.RuntimeTimeout,
 		HTTPPort:              opts.HTTPPort,
