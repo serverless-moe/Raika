@@ -4,10 +4,16 @@
 
 package platform
 
+import (
+	"github.com/wuhan005/Raika/internal/types"
+)
+
 type AuthenticateOptions map[string]string
 
 type Cloud interface {
 	String() string
+	Platform() types.Platform
+	GetID() string
 	Authenticate() error
 	CreateFunction(opts CreateFunctionOptions) (string, error)
 }

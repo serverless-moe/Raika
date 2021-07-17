@@ -14,17 +14,20 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/wuhan005/Raika/internal/platform"
+	"github.com/wuhan005/Raika/internal/types"
 )
 
 var _ platform.Cloud = (*Client)(nil)
 
 type Client struct {
+	id                  string
 	regionID            string
 	secretID, secretKey string
 }
 
 func New(opts platform.AuthenticateOptions) *Client {
 	return &Client{
+		id:        opts["id"],
 		regionID:  opts[RegionIDField],
 		secretID:  opts[SecretIDField],
 		secretKey: opts[SecretKeyField],
@@ -32,7 +35,15 @@ func New(opts platform.AuthenticateOptions) *Client {
 }
 
 func (c *Client) String() string {
-	return "tencentcloud"
+	return string(c.Platform())
+}
+
+func (c *Client) Platform() types.Platform {
+	return types.TencentCloud
+}
+
+func (c *Client) GetID() string {
+	return c.id
 }
 
 func (c *Client) Authenticate() error {

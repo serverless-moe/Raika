@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "unknwon.dev/clog/v2"
 
+	"github.com/wuhan005/Raika/internal/platform/fileutil"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -48,7 +49,7 @@ func (f *File) Load() error {
 		if os.IsNotExist(err) {
 			file, err = os.Create(f.FileName)
 			if err != nil {
-				return errors.Wrap(err, "crate file")
+				return errors.Wrap(err, "create file")
 			}
 		} else {
 			return errors.Wrap(err, "open file")
@@ -109,13 +110,13 @@ func (f *File) Save() (retErr error) {
 		return errors.Wrap(err, "error closing temp file")
 	}
 
-	// Handle situation where the confie file is a symlink
+	// Handle situation where the config file is a symlink
 	cfgFile := f.FileName
 	if f, err := os.Readlink(cfgFile); err == nil {
 		cfgFile = f
 	}
 
 	// Try copying the current config file (if any) ownership and permissions
-	copyFilePermissions(cfgFile, temp.Name())
+	fileutil.CopyFilePermissions(cfgFile, temp.Name())
 	return os.Rename(temp.Name(), cfgFile)
 }

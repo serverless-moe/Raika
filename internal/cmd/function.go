@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -15,6 +16,7 @@ import (
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
 	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
+	"github.com/wuhan005/Raika/internal/store"
 	"github.com/wuhan005/Raika/internal/types"
 )
 
@@ -35,6 +37,11 @@ var Function = &cli.Command{
 				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
 				&cli.StringSliceFlag{Name: "platform", Usage: "Platform to deploy", Required: false},
 			},
+		},
+		{
+			Name:   "list",
+			Usage:  "List all the functions",
+			Action: listFunctions,
 		},
 	},
 }
@@ -62,6 +69,7 @@ func createFunction(c *cli.Context) error {
 		switch p.Platform {
 		case types.Aliyun:
 			client := aliyun.New(platform.AuthenticateOptions{
+				"id":                        fmt.Sprintf("%s@%s@%s", types.Aliyun, p.AccountID, p.RegionID),
 				aliyun.RegionIDField:        p.RegionID,
 				aliyun.AccountIDField:       p.AccountID,
 				aliyun.AccessKeyIDField:     p.AccessKeyID,
@@ -70,6 +78,7 @@ func createFunction(c *cli.Context) error {
 			platforms = append(platforms, client)
 		case types.TencentCloud:
 			client := tencentcloud.New(platform.AuthenticateOptions{
+				"id":                        fmt.Sprintf("%s@%s@%s", types.TencentCloud, p.SecretID, p.RegionID),
 				tencentcloud.RegionIDField:  p.RegionID,
 				tencentcloud.SecretIDField:  p.SecretID,
 				tencentcloud.SecretKeyField: p.SecretKey,
@@ -89,7 +98,8 @@ func createFunction(c *cli.Context) error {
 
 	for _, p := range platforms {
 		log.Info("Create function %q on %s", name, p)
-		triggerURL, err := p.CreateFunction(platform.CreateFunctionOptions{
+
+		opts := platform.CreateFunctionOptions{
 			Name:                  name,
 			Description:           description,
 			MemorySize:            memorySize,
@@ -98,13 +108,28 @@ func createFunction(c *cli.Context) error {
 			RuntimeTimeout:        time.Duration(runtimeTimeout) * time.Second,
 			HTTPPort:              9000, // For tencentcloud
 			File:                  binaryFile,
-		})
+		}
+		triggerURL, err := p.CreateFunction(opts)
 		if err != nil {
 			log.Error("Failed to create function on %s: %v", p, err)
 			continue
 		}
+		// Save the function into file.
+		if err := store.Functions.Set(name, p.GetID(), triggerURL, opts); err != nil {
+			log.Error("Failed to save function to file: %v", err)
+		}
 
 		log.Info("[ %s ] - %s", p, triggerURL)
+	}
+	return nil
+}
+
+func listFunctions(c *cli.Context) error {
+	for name, platforms := range store.Functions.Functions {
+		log.Info("-  %s", name)
+		for _, p := range platforms {
+			log.Trace("   [%s] %s", p.PlatformID, p.URL)
+		}
 	}
 	return nil
 }

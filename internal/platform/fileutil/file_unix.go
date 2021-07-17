@@ -4,16 +4,16 @@
 
 // +build !windows
 
-package config
+package fileutil
 
 import (
 	"os"
 	"syscall"
 )
 
-// copyFilePermissions copies file ownership and permissions from "src" to "dst",
+// CopyFilePermissions copies file ownership and permissions from "src" to "dst",
 // ignoring any error during the process.
-func copyFilePermissions(src, dst string) {
+func CopyFilePermissions(src, dst string) {
 	var (
 		mode     os.FileMode = 0600
 		uid, gid int

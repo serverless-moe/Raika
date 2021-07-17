@@ -22,17 +22,20 @@ import (
 	log "unknwon.dev/clog/v2"
 
 	"github.com/wuhan005/Raika/internal/platform"
+	"github.com/wuhan005/Raika/internal/types"
 )
 
 var _ platform.Cloud = (*Client)(nil)
 
 type Client struct {
+	id                                      string
 	regionID                                string
 	accountID, accessKeyID, accessKeySecret string
 }
 
 func New(opts platform.AuthenticateOptions) *Client {
 	return &Client{
+		id:              opts["id"],
 		regionID:        opts[RegionIDField],
 		accountID:       opts[AccountIDField],
 		accessKeyID:     opts[AccessKeyIDField],
@@ -41,7 +44,15 @@ func New(opts platform.AuthenticateOptions) *Client {
 }
 
 func (c *Client) String() string {
-	return "aliyun"
+	return string(c.Platform())
+}
+
+func (c *Client) Platform() types.Platform {
+	return types.Aliyun
+}
+
+func (c *Client) GetID() string {
+	return c.id
 }
 
 func (c *Client) Authenticate() error {
