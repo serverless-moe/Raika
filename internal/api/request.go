@@ -15,10 +15,6 @@ import (
 
 var host = "http://127.0.0.1:3000"
 
-func GetHost() string {
-	return host
-}
-
 func request(method, baseURL string, requestBody ...interface{}) (*response, error) {
 	var body io.Reader
 	if len(requestBody) == 1 {

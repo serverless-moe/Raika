@@ -6,11 +6,14 @@ package daemon
 
 import (
 	gocontext "context"
+	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/flamego/flamego"
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 	log "unknwon.dev/clog/v2"
 
 	"github.com/wuhan005/Raika/internal/context"
@@ -18,6 +21,28 @@ import (
 )
 
 func Run() error {
+	c := cron.New()
+	taskEntrySets := make(map[string]cron.EntryID)
+
+	// Cron task.
+	for _, task := range store.Tasks.Tasks {
+		if !task.Enabled {
+			continue
+		}
+
+		entryID, err := c.AddFunc(fmt.Sprintf("@every %ds", task.Duration/time.Second), func() {
+			// TODO handle error
+			_, _ = runFunction(task.FunctionName)
+		})
+		if err != nil {
+			continue
+		}
+
+		taskEntrySets[task.FunctionName] = entryID
+	}
+
+	c.Start()
+
 	f := flamego.Classic()
 	f.Use(context.Contexter())
 	server := http.Server{
@@ -25,20 +50,55 @@ func Run() error {
 		Handler: f,
 	}
 
-	f.Post("/task/run", func(ctx context.Context) {
-		functionName := ctx.Request().URL.Query().Get("functionName")
-		resp, err := runFunction(functionName)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, err.Error())
-			return
-		}
+	f.Group("/task", func() {
+		f.Post("/run", func(ctx context.Context) {
+			functionName := ctx.Request().URL.Query().Get("functionName")
+			resp, err := runFunction(functionName)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, err.Error())
+				return
+			}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, err.Error())
-			return
-		}
-		ctx.JSON(http.StatusOK, string(body))
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, err.Error())
+				return
+			}
+			ctx.JSON(http.StatusOK, string(body))
+		})
+
+		f.Post("/enable", func(ctx context.Context) {
+			functionName := ctx.Request().URL.Query().Get("functionName")
+			task, err := store.Tasks.Get(functionName)
+			if err != nil {
+				ctx.Error(http.StatusNotFound, err.Error())
+				return
+			}
+
+			entryID, err := c.AddFunc(fmt.Sprintf("@every %ds", task.Duration/time.Second), func() {
+				// TODO handle error
+				_, _ = runFunction(task.FunctionName)
+			})
+			if err != nil {
+				ctx.Error(http.StatusInternalServerError, err.Error())
+			}
+			taskEntrySets[task.FunctionName] = entryID
+		})
+
+		f.Post("/disable", func(ctx context.Context) {
+			functionName := ctx.Request().URL.Query().Get("functionName")
+			entryID, ok := taskEntrySets[functionName]
+			if ok {
+				c.Remove(entryID)
+				delete(taskEntrySets, functionName)
+				err := store.Tasks.Disable(functionName)
+				if err != nil {
+					ctx.Error(http.StatusInternalServerError, errors.Wrap(err, "disable tasks").Error())
+					return
+				}
+			}
+			ctx.NoContent()
+		})
 	})
 
 	f.Post("/stop", func(ctx context.Context) {

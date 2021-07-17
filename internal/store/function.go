@@ -68,8 +68,6 @@ func (s *FunctionStore) Set(functionName string, platformID string, triggerURL s
 	return s.Save()
 }
 
-var ErrFunctionNotExists = errors.New("function not found")
-
 func (s *FunctionStore) Get(functionName string) ([]types.Function, error) {
 	function, ok := s.Functions[functionName]
 	if !ok {

@@ -22,3 +22,25 @@ func RunTask(functionName string) error {
 	log.Trace("Response: %q", resp.ToString())
 	return nil
 }
+
+func EnableTask(functionName string) error {
+	resp, err := request(http.MethodPost, "/task/enable?functionName="+functionName)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("unexpected status code %d: %v", resp.StatusCode, resp.ToString())
+	}
+	return nil
+}
+
+func DisableTask(functionName string) error {
+	resp, err := request(http.MethodPost, "/task/disable?functionName="+functionName)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("unexpected status code %d: %v", resp.StatusCode, resp.ToString())
+	}
+	return nil
+}

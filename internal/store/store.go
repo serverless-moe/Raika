@@ -7,8 +7,12 @@ package store
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 var HomePath, _ = os.UserHomeDir()
 var DefaultFunctionPath = filepath.Join(HomePath, "./.raika/functions.json")
 var DefaultTaskPath = filepath.Join(HomePath, "./.raika/tasks.json")
+
+var ErrFunctionNotExists = errors.New("function not found")

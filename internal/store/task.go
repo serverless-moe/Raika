@@ -24,14 +24,14 @@ var Tasks TaskStore
 type TaskStore struct {
 	FileName string `json:"-"` // Note: for internal use only
 
-	Tasks map[string]types.Task `json:"tasks"`
+	Tasks map[string]*types.Task `json:"tasks"`
 }
 
 // Init reads the configuration data from the given file path.
 func (s *TaskStore) Init(fileName string) error {
 	Tasks = TaskStore{
 		FileName: fileName,
-		Tasks:    make(map[string]types.Task),
+		Tasks:    make(map[string]*types.Task),
 	}
 	return s.Load()
 }
@@ -41,9 +41,18 @@ type CreateTaskOptions struct {
 	Duration     time.Duration
 }
 
+func (s *TaskStore) Get(functionName string) (*types.Task, error) {
+	for _, task := range s.Tasks {
+		if task.FunctionName == functionName {
+			return task, nil
+		}
+	}
+	return nil, ErrFunctionNotExists
+}
+
 // Upsert creates or update a new task record.
 func (s *TaskStore) Upsert(opts CreateTaskOptions) error {
-	s.Tasks[opts.FunctionName] = types.Task{
+	s.Tasks[opts.FunctionName] = &types.Task{
 		FunctionName: opts.FunctionName,
 		Duration:     opts.Duration,
 		Enabled:      true,
@@ -78,6 +87,26 @@ func (s *TaskStore) Load() error {
 		}
 	}
 	return s.LoadFromReader(file)
+}
+
+func (s *TaskStore) Enable(functionName string) error {
+	_, ok := s.Tasks[functionName]
+	if !ok {
+		return ErrFunctionNotExists
+	}
+
+	s.Tasks[functionName].Enabled = false
+	return s.Save()
+}
+
+func (s *TaskStore) Disable(functionName string) error {
+	_, ok := s.Tasks[functionName]
+	if !ok {
+		return ErrFunctionNotExists
+	}
+
+	s.Tasks[functionName].Enabled = true
+	return s.Save()
 }
 
 // LoadFromReader reads the configuration data given and sets up the auth config

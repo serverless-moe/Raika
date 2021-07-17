@@ -39,6 +39,22 @@ var cronCommands = []*cli.Command{
 		},
 	},
 	{
+		Name:   "enable",
+		Usage:  "Enable the cron task",
+		Action: enableCronTask,
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "name", Usage: "Function name", Required: true},
+		},
+	},
+	{
+		Name:   "disable",
+		Usage:  "Disable the cron task",
+		Action: disableCronTask,
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "name", Usage: "Function name", Required: true},
+		},
+	},
+	{
 		Name:   "run",
 		Usage:  "Run the cron task immediately",
 		Action: runCornTask,
@@ -84,6 +100,16 @@ func createCornTask(c *cli.Context) error {
 func deleteCornTask(c *cli.Context) error {
 	functionName := c.String("name")
 	return store.Tasks.Delete(functionName)
+}
+
+func enableCronTask(c *cli.Context) error {
+	functionName := c.String("name")
+	return store.Tasks.Enable(functionName)
+}
+
+func disableCronTask(c *cli.Context) error {
+	functionName := c.String("name")
+	return store.Tasks.Disable(functionName)
 }
 
 func runCornTask(c *cli.Context) error {
