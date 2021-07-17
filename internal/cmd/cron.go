@@ -70,7 +70,7 @@ func listCornTask(_ *cli.Context) error {
 		if !task.Enabled {
 			status = "DISABLED"
 		}
-		log.Trace("[%s] %s/s (%s)", functionName, task.Duration/time.Second, status)
+		log.Trace("[%s] %s (%s)", functionName, task.Duration, status)
 	}
 	return nil
 }
@@ -99,17 +99,35 @@ func createCornTask(c *cli.Context) error {
 
 func deleteCornTask(c *cli.Context) error {
 	functionName := c.String("name")
-	return store.Tasks.Delete(functionName)
+	if err := store.Tasks.Delete(functionName); err != nil {
+		return errors.Wrap(err, "delete task")
+	}
+	if err := api.Reload(); err != nil {
+		return errors.Wrapf(err, "reload")
+	}
+	return nil
 }
 
 func enableCronTask(c *cli.Context) error {
 	functionName := c.String("name")
-	return store.Tasks.Enable(functionName)
+	if err := store.Tasks.Enable(functionName); err != nil {
+		return errors.Wrap(err, "enable task")
+	}
+	if err := api.Reload(); err != nil {
+		return errors.Wrapf(err, "reload")
+	}
+	return nil
 }
 
 func disableCronTask(c *cli.Context) error {
 	functionName := c.String("name")
-	return store.Tasks.Disable(functionName)
+	if err := store.Tasks.Disable(functionName); err != nil {
+		return errors.Wrap(err, "disable task")
+	}
+	if err := api.Reload(); err != nil {
+		return errors.Wrapf(err, "reload")
+	}
+	return nil
 }
 
 func runCornTask(c *cli.Context) error {

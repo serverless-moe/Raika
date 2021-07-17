@@ -6,8 +6,6 @@ package api
 
 import (
 	"net/http"
-
-	"github.com/pkg/errors"
 )
 
 func Stop() error {
@@ -17,12 +15,6 @@ func Stop() error {
 }
 
 func Reload() error {
-	resp, err := request(http.MethodPost, "/reload")
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusNoContent {
-		return errors.Wrapf(err, "unexpected status code %d: %v", resp.StatusCode, resp.ToString())
-	}
+	_, _ = request(http.MethodPost, "/reload")
 	return nil
 }

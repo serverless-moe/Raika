@@ -24,22 +24,25 @@ func Run() error {
 	c := cron.New()
 	taskEntrySets := make(map[string]cron.EntryID)
 
-	// Cron task.
-	for _, task := range store.Tasks.Tasks {
-		if !task.Enabled {
-			continue
-		}
+	refreshCronTask := func() {
+		// Cron task.
+		for _, task := range store.Tasks.Tasks {
+			if !task.Enabled {
+				continue
+			}
 
-		entryID, err := c.AddFunc(fmt.Sprintf("@every %ds", task.Duration/time.Second), func() {
-			// TODO handle error
-			_, _ = runFunction(task.FunctionName)
-		})
-		if err != nil {
-			continue
-		}
+			entryID, err := c.AddFunc(fmt.Sprintf("@every %s", task.Duration), func() {
+				// TODO handle error
+				_, _ = runFunction(task.FunctionName)
+			})
+			if err != nil {
+				continue
+			}
 
-		taskEntrySets[task.FunctionName] = entryID
+			taskEntrySets[task.FunctionName] = entryID
+		}
 	}
+	refreshCronTask()
 
 	c.Start()
 
@@ -119,6 +122,14 @@ func Run() error {
 			ctx.Error(http.StatusInternalServerError, errors.Wrap(err, "reload tasks file").Error())
 			return
 		}
+
+		c.Stop()
+		for _, entry := range c.Entries() {
+			c.Remove(entry.ID)
+		}
+		refreshCronTask()
+		c.Start()
+
 		ctx.NoContent()
 	})
 

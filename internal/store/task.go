@@ -95,7 +95,7 @@ func (s *TaskStore) Enable(functionName string) error {
 		return ErrFunctionNotExists
 	}
 
-	s.Tasks[functionName].Enabled = false
+	s.Tasks[functionName].Enabled = true
 	return s.Save()
 }
 
@@ -105,7 +105,7 @@ func (s *TaskStore) Disable(functionName string) error {
 		return ErrFunctionNotExists
 	}
 
-	s.Tasks[functionName].Enabled = true
+	s.Tasks[functionName].Enabled = false
 	return s.Save()
 }
 
