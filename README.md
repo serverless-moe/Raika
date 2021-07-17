@@ -1,4 +1,4 @@
-# ☁️ Raika ![Go](https://github.com/wuhan005/Raika/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/wuhan005/Raika)](https://goreportcard.com/report/github.com/wuhan005/Raika)
+# ☁️ Raika ![Go](https://github.com/wuhan005/Raika/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/wuhan005/Raika)](https://goreportcard.com/report/github.com/wuhan005/Raika) [![Sourcegraph](https://img.shields.io/badge/view%20on-Sourcegraph-brightgreen.svg?logo=sourcegraph)](https://sourcegraph.com/github.com/wuhan005/Raika)
 
 Hybrid cloud serverless function framework.
 
