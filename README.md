@@ -2,6 +2,8 @@
 
 Hybrid cloud serverless function framework.
 
+<img src="assets/Raika@ごっち.png" align="right" width="250px"/>
+
 ## Getting started
 
 ### Login to cloud platform
