@@ -1,8 +1,8 @@
+<a href="https://www.pixiv.net/artworks/85627908"><img src="assets/Raika@ごっち.png" align="right" width="200px"/></a>
+
 # ☁️ Raika ![Go](https://github.com/wuhan005/Raika/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/wuhan005/Raika)](https://goreportcard.com/report/github.com/wuhan005/Raika) [![Sourcegraph](https://img.shields.io/badge/view%20on-Sourcegraph-brightgreen.svg?logo=sourcegraph)](https://sourcegraph.com/github.com/wuhan005/Raika)
 
 Hybrid cloud serverless function framework.
-
-<img src="assets/Raika@ごっち.png" align="right" width="250px"/>
 
 ## Getting started
 
