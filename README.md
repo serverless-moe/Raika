@@ -20,6 +20,8 @@ Raika platform login  --platform aliyun --region-id cn-hangzhou --account-id <RE
 Raika platform login  --platform tencentcloud --region-id ap-shanghai --secret-id <REDACTED> --secret-key <REDACTED>
 ```
 
+### List the cloud platform accounts
+
 ```bash
 Raika platform list
 ```
@@ -29,19 +31,24 @@ Raika platform list
 ```bash
 Raika function create \
     --name hello_unknwon \
-    --memory 128 \
-    --init-timeout 10 \
-    --runtime-timeout 10 \
-    --binary-file hello_unknwon
+    --memory 128 \    # MB
+    --init-timeout 10 \   # seconds
+    --runtime-timeout 10 \  # seconds
+    --binary-file hello_unknwon \
+    --env MYENV=here_is_env_var
 ```
 
-### Start daemon
+### Internal daemon
+
+Raika provides an internal daemon service which allows you to run the serverless function periodically.
+
+#### Start daemon service
 
 ```bash
 Raika daemon start  
 ```
 
-### Create & Run task
+#### Create & Run periodic task
 
 ```bash
 Raika daemon cron create --name helloworld --duration 5
