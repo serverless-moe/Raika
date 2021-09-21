@@ -110,7 +110,7 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 	// Create HTTP trigger for function.
 	log.Trace("Create HTTP trigger...")
 	resp, err := c.CreateHTTPTrigger(CreateHTTPTriggerOptions{
-		TriggerName:  platform.TriggerName,
+		TriggerName:  platform.HTTPTriggerName,
 		FunctionName: opts.Name,
 	})
 	if err != nil {

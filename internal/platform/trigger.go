@@ -4,4 +4,5 @@
 
 package platform
 
-const TriggerName = "Raika_HTTPTrigger"
+const HTTPTriggerName = "Raika_HTTPTrigger"
+const CronTriggerName = "Raika_CronTrigger"

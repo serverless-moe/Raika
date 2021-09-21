@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-const TriggerName = "Raika_HTTPTrigger"
-
 type CreateHTTPTriggerOptions struct {
 	TriggerName  string
 	ServiceName  string
@@ -65,6 +63,53 @@ func (c *Client) GetHTTPTrigger(serviceName, functionName, triggerName string) (
 		return nil, errors.New(resp.ToString())
 	}
 	return nil, nil
+}
+
+type CreateCronTriggerOptions struct {
+	TriggerName  string
+	ServiceName  string
+	FunctionName string
+	CronString   string
+}
+
+type CreateCronTriggerRequest struct {
+	Name   string `json:"triggerName"`
+	Type   string `json:"triggerType"`
+	Config struct {
+		AuthType       string `json:"authType"`
+		CronExpression string `json:"cronExpression"`
+		Enable         bool   `json:"enable"`
+	} `json:"triggerConfig"`
+	InvocationRole string `json:"invocationRole"`
+	Qualifier      string `json:"qualifier"`
+	SourceArn      string `json:"sourceArn"`
+}
+
+func (c *Client) CreateCronTrigger(opts CreateCronTriggerOptions) error {
+	requestBody := CreateCronTriggerRequest{
+		Name: opts.TriggerName,
+		Type: "timer",
+		Config: struct {
+			AuthType       string `json:"authType"`
+			CronExpression string `json:"cronExpression"`
+			Enable         bool   `json:"enable"`
+		}{
+			AuthType:       "anonymous",
+			CronExpression: opts.CronString,
+			Enable:         true,
+		},
+		InvocationRole: fmt.Sprintf("acs:ram::%s:role/aliyunfcdefaultrole", c.accountID),
+		Qualifier:      "LATEST",
+		SourceArn:      "anonymous",
+	}
+	resp, err := c.request(http.MethodPost, fmt.Sprintf("/services/%s/functions/%s/triggers", opts.ServiceName, opts.FunctionName), requestBody)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(resp.ToString())
+	}
+	return nil
 }
 
 type ListTriggersResponse struct {

@@ -15,6 +15,9 @@ type CreateFunctionOptions struct {
 	EnvironmentVariables  map[string]string
 	InitializationTimeout time.Duration
 	RuntimeTimeout        time.Duration
-	HTTPPort              int
 	File                  string
+
+	TriggerType string
+	CronString  string
+	HTTPPort    int
 }

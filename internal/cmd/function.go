@@ -39,6 +39,8 @@ var Function = &cli.Command{
 				&cli.StringFlag{Name: "binary-file", Usage: "Function binary file", Required: true},
 				&cli.StringSliceFlag{Name: "platform", Usage: "Platform to deploy", Required: false},
 				&cli.StringSliceFlag{Name: "env", Usage: "Environment variables", Required: false},
+				&cli.StringFlag{Name: "trigger", Usage: "Function trigger method", Required: false, DefaultText: "http"},
+				&cli.StringFlag{Name: "cron", Usage: "Cron expression for timer trigger", Required: false, DefaultText: "0 30 * * * *"},
 			},
 		},
 		{
@@ -108,6 +110,8 @@ func createFunction(c *cli.Context) error {
 	initTimeout := c.Int("init-timeout")
 	runtimeTimeout := c.Int("runtime-timeout")
 	environmentVariables := c.StringSlice("env")
+	trigger := c.String("trigger")
+	cron := c.String("cron")
 
 	envs := make(map[string]string)
 	// Parse environment variables.
@@ -129,8 +133,11 @@ func createFunction(c *cli.Context) error {
 			EnvironmentVariables:  envs,
 			InitializationTimeout: time.Duration(initTimeout) * time.Second,
 			RuntimeTimeout:        time.Duration(runtimeTimeout) * time.Second,
-			HTTPPort:              9000, // For tencentcloud
 			File:                  binaryFile,
+
+			TriggerType: trigger,
+			CronString:  cron,
+			HTTPPort:    9000, // For tencentcloud
 		}
 		triggerURL, err := p.CreateFunction(opts)
 		if err != nil {

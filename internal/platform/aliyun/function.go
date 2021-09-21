@@ -105,17 +105,32 @@ func (c *Client) CreateFunction(opts platform.CreateFunctionOptions) (string, er
 		return "", errors.Wrap(err, "create function")
 	}
 
-	// Create HTTP trigger for function.
-	err = c.CreateHTTPTrigger(CreateHTTPTriggerOptions{
-		TriggerName:  platform.TriggerName,
-		ServiceName:  ServiceName,
-		FunctionName: opts.Name,
-	})
-	if err != nil {
-		return "", errors.Wrap(err, "create HTTP trigger")
-	}
+	if opts.TriggerType == "http" {
+		// Create HTTP trigger for function.
+		err = c.CreateHTTPTrigger(CreateHTTPTriggerOptions{
+			TriggerName:  platform.HTTPTriggerName,
+			ServiceName:  ServiceName,
+			FunctionName: opts.Name,
+		})
+		if err != nil {
+			return "", errors.Wrap(err, "create HTTP trigger")
+		}
 
-	return fmt.Sprintf("https://%s.%s.fc.aliyuncs.com/2016-08-15/proxy/%s/%s/", c.accountID, c.regionID, ServiceName, opts.Name), nil
+		return fmt.Sprintf("https://%s.%s.fc.aliyuncs.com/2016-08-15/proxy/%s/%s/", c.accountID, c.regionID, ServiceName, opts.Name), nil
+	} else if opts.TriggerType == "cron" {
+		err = c.CreateCronTrigger(CreateCronTriggerOptions{
+			TriggerName:  platform.CronTriggerName,
+			ServiceName:  ServiceName,
+			FunctionName: opts.Name,
+			CronString:   opts.CronString,
+		})
+		if err != nil {
+			return "", errors.Wrap(err, "create timer trigger")
+		}
+	} else {
+		return "", errors.Errorf("unexpected trigger type %q", opts.TriggerType)
+	}
+	return "", nil
 }
 
 func packFile(path string) ([]byte, error) {
