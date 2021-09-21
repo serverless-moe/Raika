@@ -9,11 +9,12 @@ type Platform string
 const (
 	Aliyun       Platform = "aliyun"
 	TencentCloud Platform = "tencentcloud"
+	AWS          Platform = "aws"
 )
 
 func (p Platform) Check() bool {
 	switch p {
-	case Aliyun, TencentCloud:
+	case Aliyun, TencentCloud, AWS:
 		return true
 	}
 	return false

@@ -16,6 +16,7 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
+	"github.com/wuhan005/Raika/internal/platform/aws"
 	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/store"
 	"github.com/wuhan005/Raika/internal/types"
@@ -84,6 +85,15 @@ func createFunction(c *cli.Context) error {
 				tencentcloud.RegionIDField:  p.RegionID,
 				tencentcloud.SecretIDField:  p.SecretID,
 				tencentcloud.SecretKeyField: p.SecretKey,
+			})
+			platforms = append(platforms, client)
+		case types.AWS:
+			client := aws.New(platform.AuthenticateOptions{
+				"id":               fmt.Sprintf("%s@%s@%s", types.AWS, p.AccountID, p.RegionID),
+				aws.RegionIDField:  p.RegionID,
+				aws.AccountIDField: p.AccountID,
+				aws.AccessKeyField: p.AccessKeyID,
+				aws.SecretKeyField: p.SecretKey,
 			})
 			platforms = append(platforms, client)
 		default:

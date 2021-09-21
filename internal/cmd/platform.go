@@ -12,6 +12,7 @@ import (
 	"github.com/wuhan005/Raika/internal/config"
 	"github.com/wuhan005/Raika/internal/platform"
 	"github.com/wuhan005/Raika/internal/platform/aliyun"
+	"github.com/wuhan005/Raika/internal/platform/aws"
 	"github.com/wuhan005/Raika/internal/platform/tencentcloud"
 	"github.com/wuhan005/Raika/internal/types"
 )
@@ -70,6 +71,13 @@ func loginPlatform(c *cli.Context) error {
 			tencentcloud.RegionIDField:  regionID,
 			tencentcloud.SecretIDField:  secretID,
 			tencentcloud.SecretKeyField: secretKey,
+		})
+	case types.AWS:
+		client = aws.New(platform.AuthenticateOptions{
+			aws.RegionIDField:  regionID,
+			aws.AccountIDField: accountID,
+			aws.AccessKeyField: accessKeyID,
+			aws.SecretKeyField: secretKey,
 		})
 	default:
 		return errors.Errorf("unsupported platform: %q", p)
